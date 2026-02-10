@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Representation Quiz Generator</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (for JSX compilation) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        /* Custom animations usually handled by config, added here for safety */
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons (Embedded to remove external dependency issues) ---
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const CheckCircle = (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const XCircle = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></IconBase>;
+        const RefreshCw = (p) => <IconBase {...p}><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></IconBase>;
+        const Hash = (p) => <IconBase {...p}><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></IconBase>;
+        const Download = (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconBase>;
+        const FileText = (p) => <IconBase {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></IconBase>;
+        const Key = (p) => <IconBase {...p}><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 2 2 2.25-2.25m-4.25 2.25 2.25-2.25m-4.25 2.25 2.25-2.25"/></IconBase>;
+        const Loader = (p) => <IconBase {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></IconBase>;
+        const Play = (p) => <IconBase {...p}><polygon points="5 3 19 12 5 21 5 3"/></IconBase>;
+        const ArrowLeft = (p) => <IconBase {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></IconBase>;
+
+        // --- Generator Logic ---
+
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const toBinArray = (num) => num.toString(2).padStart(8, '0').split('').map(Number);
+        const toHexArray = (num) => num.toString(16).toUpperCase().padStart(2, '0').split('');
+
+        const generateQuestions = (config) => {
+            let idCounter = 1;
+            const newQuestions = [];
+
+            // 1. Binary to Denary
+            for (let i = 0; i < config.binToDen; i++) {
+                const val = getRandomInt(1, 255);
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'bin_to_den',
+                    label: `${idCounter-1}. Convert Binary to Denary`,
+                    headers: [128, 64, 32, 16, 8, 4, 2, 1],
+                    values: toBinArray(val),
+                    correctAnswer: val.toString()
+                });
+            }
+
+            // 2. Denary to Binary
+            for (let i = 0; i < config.denToBin; i++) {
+                const val = getRandomInt(1, 255);
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'den_to_bin',
+                    label: `${idCounter-1}. Convert Denary ${val} to Binary`,
+                    headers: [128, 64, 32, 16, 8, 4, 2, 1],
+                    correctAnswer: toBinArray(val).map(String)
+                });
+            }
+
+            // 3. Binary Addition (No Carries)
+            for (let i = 0; i < config.binAddNoCarry; i++) {
+                let a, b;
+                do {
+                    a = getRandomInt(1, 128);
+                    b = getRandomInt(1, 127);
+                } while ((a & b) !== 0 || (a + b) > 255);
+
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'bin_add',
+                    label: `${idCounter-1}. Binary Addition`,
+                    headers: [128, 64, 32, 16, 8, 4, 2, 1],
+                    operands: [toBinArray(a), toBinArray(b)],
+                    correctAnswer: toBinArray(a + b).map(String)
+                });
+            }
+
+            // 4. Binary Addition (With Carries)
+            for (let i = 0; i < config.binAddCarry; i++) {
+                let a, b;
+                do {
+                    a = getRandomInt(1, 200);
+                    b = getRandomInt(1, 200);
+                } while ((a & b) === 0 || (a + b) > 255);
+
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'bin_add',
+                    label: `${idCounter-1}. Binary Addition`,
+                    headers: [128, 64, 32, 16, 8, 4, 2, 1],
+                    operands: [toBinArray(a), toBinArray(b)],
+                    correctAnswer: toBinArray(a + b).map(String)
+                });
+            }
+
+            // 5. Hex to Denary
+            for (let i = 0; i < config.hexToDen; i++) {
+                const val = getRandomInt(10, 255);
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'hex_to_den',
+                    label: `${idCounter-1}. Convert Hex to Denary`,
+                    headers: [16, 1],
+                    values: toHexArray(val),
+                    correctAnswer: val.toString()
+                });
+            }
+
+            // 6. Binary to Hex (Split)
+            for (let i = 0; i < config.binToHex; i++) {
+                const val = getRandomInt(1, 255);
+                newQuestions.push({
+                    id: idCounter++,
+                    type: 'bin_to_hex',
+                    label: `${idCounter-1}. Convert Binary to Hex`,
+                    headers: [128, 64, 32, 16, 8, 4, 2, 1],
+                    inputHeaders: [16, 1],
+                    values: toBinArray(val),
+                    correctAnswer: toHexArray(val)
+                });
+            }
+
+            return newQuestions;
+        };
+
+        // --- Main App Component ---
+
+        const QuizApp = () => {
+            const [view, setView] = useState('setup');
+            const [config, setConfig] = useState({
+                binToDen: 5,
+                denToBin: 5,
+                binAddNoCarry: 5,
+                binAddCarry: 5,
+                hexToDen: 5,
+                binToHex: 5
+            });
+            
+            const [questions, setQuestions] = useState([]);
+            const [answers, setAnswers] = useState({});
+            const [submitted, setSubmitted] = useState(false);
+            const [isExporting, setIsExporting] = useState(false);
+
+            const startQuiz = () => {
+                const generated = generateQuestions(config);
+                if (generated.length === 0) {
+                    alert("Please select at least one question to generate.");
+                    return;
+                }
+                setQuestions(generated);
+                setAnswers({});
+                setSubmitted(false);
+                setView('quiz');
+                window.scrollTo(0, 0);
+            };
+
+            const fillCorrectAnswers = () => {
+                const newAnswers = {};
+                questions.forEach(q => {
+                    if (Array.isArray(q.correctAnswer)) {
+                        newAnswers[q.id] = [...q.correctAnswer];
+                    } else {
+                        newAnswers[q.id] = q.correctAnswer;
+                    }
+                });
+                setAnswers(newAnswers);
+                setSubmitted(false); 
+            };
+
+            const clearAnswers = () => {
+                setAnswers({});
+                setSubmitted(false);
+            };
+
+            const handleDownloadZip = async () => {
+                if (!window.html2canvas || !window.JSZip || !window.saveAs) {
+                    alert("Export libraries are still loading or failed. Please refresh the page.");
+                    return;
+                }
+
+                setIsExporting(true);
+                const zip = new window.JSZip();
+                const folder = zip.folder("quiz_images");
+
+                for (const q of questions) {
+                    const element = document.getElementById(`question-card-${q.id}`);
+                    if (element) {
+                        try {
+                            const canvas = await window.html2canvas(element, {
+                                scale: 2, 
+                                backgroundColor: "#ffffff", 
+                                logging: false,
+                            });
+                            const dataUrl = canvas.toDataURL('image/png');
+                            const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                            folder.file(`Q${q.id}_${q.label.replace(/[^a-z0-9]/gi, '_').substring(0, 20)}.png`, base64Data, {base64: true});
+                        } catch (err) {
+                            console.error(`Failed to capture Q${q.id}`, err);
+                        }
+                    }
+                }
+
+                const content = await zip.generateAsync({type:"blob"});
+                window.saveAs(content, "quiz_questions.zip");
+                setIsExporting(false);
+            };
+
+            const handleConfigChange = (key, val) => {
+                const num = parseInt(val) || 0;
+                setConfig(prev => ({ ...prev, [key]: Math.max(0, Math.min(50, num)) }));
+            };
+
+            const handleSingleInputChange = (qId, value) => {
+                setAnswers(prev => ({ ...prev, [qId]: value }));
+            };
+
+            const handleMultiInputChange = (qId, index, value, headerLength) => {
+                const currentArr = answers[qId] || Array(headerLength).fill('');
+                const newArr = [...currentArr];
+                newArr[index] = value.replace(/,/g, '').toUpperCase().slice(0, 1);
+                setAnswers(prev => ({ ...prev, [qId]: newArr }));
+            };
+
+            const calculateScore = () => {
+                let score = 0;
+                questions.forEach(q => {
+                    const userAns = answers[q.id];
+                    if (!userAns) return;
+                    if (Array.isArray(q.correctAnswer)) {
+                        const userStr = Array.isArray(userAns) ? userAns.join('').replace(/,/g, '') : '';
+                        const correctStr = q.correctAnswer.join('').replace(/,/g, '');
+                        if (userStr === correctStr) score++;
+                    } else {
+                        if (userAns.trim() === q.correctAnswer) score++;
+                    }
+                });
+                return score;
+            };
+
+            // --- Render Helpers ---
+
+            const renderValueRow = (values, keyPrefix = 'val') => (
+                <tr key={keyPrefix} className="divide-x divide-slate-200 border-b border-slate-100">
+                    {values.map((val, idx) => (
+                        <td key={idx} className="p-4 text-center font-mono text-xl text-slate-700 bg-white">
+                            {val}
+                        </td>
+                    ))}
+                </tr>
+            );
+
+            const renderInputCells = (q, headersToUse = null) => {
+                const headers = headersToUse || q.headers;
+                const inputs = answers[q.id] || Array(headers.length).fill('');
+                return headers.map((_, idx) => (
+                    <td key={idx} className="p-0 bg-white">
+                        <input
+                            type="text"
+                            maxLength={1}
+                            className={`w-full h-14 text-center font-mono text-xl focus:outline-none focus:bg-slate-50 transition-colors
+                                ${submitted 
+                                    ? (inputs[idx] === q.correctAnswer[idx]?.replace(/,/g, '') ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50')
+                                    : 'text-slate-700'
+                                }
+                            `}
+                            value={inputs[idx] || ''}
+                            onChange={(e) => handleMultiInputChange(q.id, idx, e.target.value, headers.length)}
+                            disabled={submitted}
+                            autoComplete="off"
+                        />
+                    </td>
+                ));
+            };
+
+            const renderInputRow = (q, headersToUse = null) => {
+                return (
+                    <tr className="divide-x divide-slate-200">
+                        {renderInputCells(q, headersToUse)}
+                    </tr>
+                );
+            };
+
+            const renderTable = (headers, content) => (
+                <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm mb-4">
+                    <table className="w-full border-collapse table-fixed">
+                        <thead>
+                            <tr className="bg-slate-100 divide-x divide-slate-200 border-b border-slate-200">
+                                {headers.map((h, i) => (
+                                    <th key={i} className="py-3 px-1 text-center text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                                        {h}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {content}
+                        </tbody>
+                    </table>
+                </div>
+            );
+
+            // --- SETUP VIEW ---
+            if (view === 'setup') {
+                return (
+                    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans selection:bg-slate-200">
+                        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                            <div className="bg-slate-800 p-8 text-center">
+                                <div className="flex justify-center mb-4 text-slate-200">
+                                    <Hash size={48} />
+                                </div>
+                                <h1 className="text-3xl font-light tracking-wide text-white uppercase">
+                                    Quiz Generator
+                                </h1>
+                                <p className="text-slate-400 mt-2">Configure your Data Representation assessment</p>
+                            </div>
+                            
+                            <div className="p-8 space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {[
+                                        { key: 'binToDen', label: 'Binary to Denary' },
+                                        { key: 'denToBin', label: 'Denary to Binary' },
+                                        { key: 'binAddNoCarry', label: 'Binary Addition (No Carry)' },
+                                        { key: 'binAddCarry', label: 'Binary Addition (With Carry)' },
+                                        { key: 'hexToDen', label: 'Hex to Denary' },
+                                        { key: 'binToHex', label: 'Binary to Hex' },
+                                    ].map((item) => (
+                                        <div key={item.key} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                                {item.label}
+                                            </label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="50"
+                                                    value={config[item.key]}
+                                                    onChange={(e) => handleConfigChange(item.key, e.target.value)}
+                                                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xl font-mono text-center focus:border-blue-500 focus:outline-none"
+                                                />
+                                                <span className="text-slate-400 text-sm font-medium">Qty</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-slate-500 text-sm">Total Questions:</span>
+                                        <span className="text-2xl font-bold text-slate-800">
+                                            {Object.values(config).reduce((a, b) => a + b, 0)}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={startQuiz}
+                                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 group"
+                                    >
+                                        <span>Generate Quiz</span>
+                                        <Play size={20} className="group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- QUIZ VIEW ---
+            return (
+                <div className="min-h-screen bg-slate-50 pb-12 font-sans selection:bg-slate-200">
+                    
+                    {/* Sticky Header */}
+                    <div className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm px-4 py-4">
+                        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => setView('setup')}
+                                    className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                                    title="Back to Generator"
+                                >
+                                    <ArrowLeft size={20} />
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <Hash size={24} className="text-slate-600" />
+                                    <h1 className="text-lg font-bold text-slate-700 uppercase tracking-wide">Data Rep Quiz</h1>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                                <button 
+                                    onClick={clearAnswers}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors whitespace-nowrap"
+                                >
+                                    <FileText size={16} /> <span className="hidden sm:inline">Student Copy</span>
+                                </button>
+                                <button 
+                                    onClick={fillCorrectAnswers}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors whitespace-nowrap"
+                                >
+                                    <Key size={16} /> <span className="hidden sm:inline">Answer Key</span>
+                                </button>
+                                <div className="h-6 w-px bg-slate-300 mx-1 hidden md:block"></div>
+                                <button 
+                                    onClick={handleDownloadZip}
+                                    disabled={isExporting}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm transition-colors disabled:opacity-50 disabled:cursor-wait whitespace-nowrap"
+                                >
+                                    {isExporting ? <Loader className="animate-spin" size={16} /> : <Download size={16} />}
+                                    {isExporting ? 'Zipping...' : 'Download Images'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto space-y-12 px-2 sm:px-6 lg:px-8 mt-12">
+                        
+                        <div className="text-center space-y-4 mb-16">
+                            <h1 className="text-4xl font-light tracking-wide text-slate-800 uppercase">
+                                Generated Assessment
+                            </h1>
+                            <p className="text-slate-500 font-light text-lg">
+                                {questions.length} Questions
+                            </p>
+                        </div>
+
+                        <div className="space-y-20">
+                            {questions.map((q, index) => {
+                                let isCorrect = false;
+                                if (submitted) {
+                                    const userAns = answers[q.id];
+                                    if (userAns) {
+                                        if (Array.isArray(q.correctAnswer)) {
+                                            const userStr = Array.isArray(userAns) ? userAns.join('').replace(/,/g, '') : '';
+                                            const correctStr = q.correctAnswer.join('').replace(/,/g, '');
+                                            isCorrect = userStr === correctStr;
+                                        } else {
+                                            isCorrect = userAns.trim() === q.correctAnswer;
+                                        }
+                                    }
+                                }
+
+                                return (
+                                    <div 
+                                        key={q.id} 
+                                        id={`question-card-${q.id}`} 
+                                        className="relative group bg-white p-8 rounded-xl border border-slate-200 shadow-sm"
+                                    >
+                                        <div className="space-y-6">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-sm">
+                                                    {index + 1}
+                                                </span>
+                                                <h2 className="text-lg text-slate-800 font-semibold tracking-tight">
+                                                    {q.label.replace(/^\d+\.\s/, '')}
+                                                </h2>
+                                            </div>
+
+                                            {/* Logic Branching */}
+                                            {q.type === 'bin_add' && (
+                                                <div className="overflow-hidden rounded-lg border border-slate-300">
+                                                    <table className="w-full border-collapse table-fixed">
+                                                        <thead>
+                                                            <tr className="bg-slate-100 divide-x divide-slate-300 border-b border-slate-300">
+                                                                <th className="w-12 py-3 px-1"></th>
+                                                                {q.headers.map((h, i) => (
+                                                                    <th key={i} className="py-3 px-1 text-center text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider">
+                                                                        {h}
+                                                                    </th>
+                                                                ))}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr className="divide-x divide-slate-300 border-b border-slate-200">
+                                                                <td className="p-4 text-center font-bold text-slate-400 bg-slate-50"></td>
+                                                                {q.operands[0].map((val, idx) => (
+                                                                    <td key={idx} className="p-4 text-center font-mono text-xl text-slate-900 bg-white">{val}</td>
+                                                                ))}
+                                                            </tr>
+                                                            <tr className="divide-x divide-slate-300 border-b border-slate-200">
+                                                                <td className="p-4 text-center font-bold text-slate-500 bg-slate-50">+</td>
+                                                                {q.operands[1].map((val, idx) => (
+                                                                    <td key={idx} className="p-4 text-center font-mono text-xl text-slate-900 bg-white">{val}</td>
+                                                                ))}
+                                                            </tr>
+                                                            <tr className="divide-x divide-slate-300">
+                                                                <td className="p-4 text-center font-bold text-slate-500 bg-slate-50">=</td>
+                                                                {renderInputCells(q)}
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+
+                                            {q.type === 'bin_to_hex' && (
+                                                <div className="flex flex-col items-center space-y-6">
+                                                    <div className="flex items-center justify-center gap-6 w-full">
+                                                        <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm w-auto">
+                                                            <table className="border-collapse table-fixed min-w-[120px]">
+                                                                <thead>
+                                                                    <tr className="bg-slate-100 divide-x divide-slate-200 border-b border-slate-200">
+                                                                        {[8, 4, 2, 1].map((h, i) => (
+                                                                            <th key={i} className="py-2 px-3 text-center text-xs font-bold text-slate-700">
+                                                                                {h}
+                                                                            </th>
+                                                                        ))}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr className="divide-x divide-slate-200 bg-white">
+                                                                        {q.values.slice(0, 4).map((val, idx) => (
+                                                                            <td key={idx} className="p-3 text-center font-mono text-xl text-slate-900">
+                                                                                {val}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+
+                                                        <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm w-auto">
+                                                            <table className="border-collapse table-fixed min-w-[120px]">
+                                                                <thead>
+                                                                    <tr className="bg-slate-100 divide-x divide-slate-200 border-b border-slate-200">
+                                                                        {[8, 4, 2, 1].map((h, i) => (
+                                                                            <th key={i} className="py-2 px-3 text-center text-xs font-bold text-slate-700">
+                                                                                {h}
+                                                                            </th>
+                                                                        ))}
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr className="divide-x divide-slate-200 bg-white">
+                                                                        {q.values.slice(4, 8).map((val, idx) => (
+                                                                            <td key={idx} className="p-3 text-center font-mono text-xl text-slate-900">
+                                                                                {val}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-2xl font-bold text-slate-400">=</div>
+
+                                                    <div className="w-1/3 mx-auto min-w-[150px]">
+                                                        {renderTable(q.inputHeaders, renderInputRow(q, q.inputHeaders))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {(q.type === 'den_to_bin') && (
+                                                renderTable(q.headers, renderInputRow(q))
+                                            )}
+
+                                            {(q.type === 'bin_to_den' || q.type === 'hex_to_den') && (
+                                                <>
+                                                    {renderTable(q.headers, renderValueRow(q.values))}
+                                                    <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-lg w-fit border border-slate-200">
+                                                        <span className="text-slate-600 text-sm uppercase tracking-widest font-bold">Denary Answer:</span>
+                                                        <input
+                                                            type="number"
+                                                            className={`block w-32 border-b-2 bg-transparent py-1 text-xl font-mono focus:outline-none transition-colors
+                                                                ${submitted 
+                                                                    ? (isCorrect ? 'border-green-400 text-green-700' : 'border-red-400 text-red-700')
+                                                                    : 'border-slate-300 focus:border-slate-500 text-slate-900'
+                                                                }
+                                                            `}
+                                                            value={answers[q.id] || ''}
+                                                            onChange={(e) => handleSingleInputChange(q.id, e.target.value)}
+                                                            disabled={submitted}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {submitted && (
+                                                <div className={`flex items-center gap-2 text-sm mt-4 p-2 rounded-md ${isCorrect ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'}`}>
+                                                    {isCorrect ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                                                    <span className="font-medium">
+                                                        {isCorrect 
+                                                            ? 'Correct' 
+                                                            : `Incorrect. Answer: ${Array.isArray(q.correctAnswer) ? q.correctAnswer.join('').replace(/,/g,'') : q.correctAnswer}`
+                                                        }
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footer Controls */}
+                        <div className="pt-12 pb-24 border-t border-slate-200 flex flex-col items-center gap-6">
+                            {!submitted ? (
+                                <button
+                                    onClick={() => setSubmitted(true)}
+                                    className="px-10 py-4 bg-slate-800 text-slate-50 text-base font-medium tracking-wider uppercase rounded-full hover:bg-slate-900 transition-all shadow-xl shadow-slate-300"
+                                >
+                                    Submit All Answers
+                                </button>
+                            ) : (
+                                <div className="flex flex-col items-center gap-6 w-full max-w-md bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
+                                    <div className="text-center">
+                                        <div className="text-sm text-slate-400 uppercase tracking-widest mb-2">Final Score</div>
+                                        <div className="text-5xl font-light text-slate-800">
+                                            <span className={calculateScore() === questions.length ? "text-green-600" : "text-slate-800"}>
+                                                {calculateScore()}
+                                            </span> 
+                                            <span className="text-slate-300 mx-2">/</span> 
+                                            {questions.length}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => { setView('setup'); setSubmitted(false); setAnswers({}); }}
+                                        className="flex items-center gap-2 px-6 py-3 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors w-full justify-center"
+                                    >
+                                        <RefreshCw size={18} />
+                                        <span>Generate New Quiz</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<QuizApp />);
+    </script>
+</body>
+</html>
